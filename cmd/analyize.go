@@ -47,5 +47,6 @@ func Analyze(cmd *cobra.Command, args []string) error {
 	//	return err
 	//}
 	//println(f)
+	_ = tools.ExportToCSV(data, "data.csv")
 	return tools.GenerateGraphviz(data, "graph.dot")
 }

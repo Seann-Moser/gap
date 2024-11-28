@@ -30,6 +30,8 @@ var builtInFuncs = map[string]bool{
 	"new":     true,
 	"panic":   true,
 	"recover": true,
+	"string":  true,
+	"println": true,
 }
 
 // FunctionInfo holds information about a function
@@ -37,6 +39,7 @@ type FunctionInfo struct {
 	FileName      string
 	FuncName      string
 	Line          int
+	PkgName       string
 	Parameters    []string
 	Returns       []string
 	Externals     []*External
@@ -106,8 +109,8 @@ func ListFunctions(projectDir string) ([]*FunctionInfo, error) {
 				return nil // Continue with other files
 			}
 
-			// Build a map of import aliases to import paths for this file
-			//importMap := buildImportMap(node)
+			// Extract the package name from the AST
+			pkgName := node.Name.Name
 
 			// Inspect the AST for function declarations
 			ast.Inspect(node, func(n ast.Node) bool {
@@ -134,6 +137,7 @@ func ListFunctions(projectDir string) ([]*FunctionInfo, error) {
 						FileName:      position.Filename,
 						FuncName:      fn.Name.Name,
 						Line:          position.Line,
+						PkgName:       pkgName, // Assign the package name
 						Parameters:    params,
 						Returns:       returns,
 						Externals:     []*External{},
@@ -144,7 +148,8 @@ func ListFunctions(projectDir string) ([]*FunctionInfo, error) {
 					functions = append(functions, funcInfo)
 
 					// Create a unique key for internal functions
-					key := fmt.Sprintf("%s.%s", filepath.Base(position.Filename), fn.Name.Name)
+					// Key format: "pkgName.funcName"
+					key := fmt.Sprintf("%s.%s", pkgName, fn.Name.Name)
 					internalFuncs[key] = funcInfo
 				}
 				return true
@@ -380,11 +385,13 @@ func analyzeFunctionCalls(fn *FunctionInfo, internalFuncs map[string]*FunctionIn
 			}
 
 			// Create a unique key for internal functions
-			key := fmt.Sprintf("%s.%s", filepath.Base(fn.FileName), funcName)
+			key := fmt.Sprintf("%s.%s", fn.PkgName, funcName)
 			if calledFunc, exists := internalFuncs[key]; exists {
+				println("FOUND FUNCTION CALL: ", key)
 				fn.FunctionCalls = append(fn.FunctionCalls, calledFunc)
 			} else {
 				// Function not found in internalFuncs, treat as external with unknown import path
+				println("MISSGING FUNCTION CALL: ", key)
 				external := &External{
 					Name:       funcName,
 					Type:       "", // Unknown package
@@ -423,8 +430,11 @@ func analyzeFunctionCalls(fn *FunctionInfo, internalFuncs map[string]*FunctionIn
 				baseImportPath := filepath.Base(importPath)
 				key := fmt.Sprintf("%s.%s", baseImportPath, funcName)
 				if calledFunc, exists := internalFuncs[key]; exists {
+					println("FOUND FUNCTION CALL: ", key)
 					fn.FunctionCalls = append(fn.FunctionCalls, calledFunc)
 				} else {
+					println("MISSGING FUNCTION CALL: ", key)
+
 					// Function not found in internalFuncs, treat as external
 					external := &External{
 						Name:       funcName,
