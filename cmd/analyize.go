@@ -40,6 +40,7 @@ func Analyze(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	tools.SortByComplexity(data)
 	tools.PrintFunctionInfos(data)
 
 	//f, err := tools.GetFunctionWithComments(data[rand.Intn(len(data))])

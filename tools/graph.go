@@ -89,6 +89,11 @@ func (fn *FunctionInfo) FullName() string {
 func (fn *FunctionInfo) ImportPathIdentifier() string {
 	// You can modify this to include package name if available.
 	// For simplicity, we'll use the relative file path without extension.
+	cwd, _ := os.Getwd()
+	if strings.Contains(cwd, "/") {
+		cwd = strings.Join(strings.Split(cwd, "/")[:len(strings.Split(cwd, "/"))-1], "/")
+	}
+	fn.FileName = strings.ReplaceAll(fn.FileName, cwd, "")
 	relPath, err := filepath.Rel(".", fn.FileName)
 	if err != nil {
 		// Fallback to absolute path if relative path fails

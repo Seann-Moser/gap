@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -44,6 +45,7 @@ type FunctionInfo struct {
 	Returns       []string
 	Externals     []*External
 	FunctionCalls []*FunctionInfo
+	Complexity    int // Holds the computed complexity value
 }
 
 // External holds information about external function calls
@@ -51,6 +53,32 @@ type External struct {
 	Name       string // Function name
 	Type       string // Package alias used in the code
 	ImportPath string // Full import path (e.g., "github.com/user/package")
+}
+
+// SortByComplexity sorts a slice of FunctionInfo by weighted complexity
+func SortByComplexity(functions []*FunctionInfo) {
+	// Define weights
+	const (
+		weightFunctionCall = 3
+		weightReturn       = 2
+		weightParameter    = 1
+	)
+
+	// Complexity calculation function with weights
+	calculateComplexity := func(f *FunctionInfo) int {
+		return weightFunctionCall*len(f.FunctionCalls) +
+			weightReturn*len(f.Returns) +
+			weightParameter*len(f.Parameters)
+	}
+
+	// Update complexity and sort functions
+	for i := range functions {
+		functions[i].Complexity = calculateComplexity(functions[i])
+	}
+
+	sort.Slice(functions, func(i, j int) bool {
+		return functions[i].Complexity > functions[j].Complexity
+	})
 }
 
 // ListFunctions lists all functions in a Go project directory,
