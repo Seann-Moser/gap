@@ -1,4 +1,4 @@
-module github.com/Seann-Moser/gap
+module github.com/Seann-Moser/gpa
 
 go 1.23.3
 

@@ -4,7 +4,7 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/Seann-Moser/gap/tools"
+	"github.com/Seann-Moser/gpa/tools"
 	"github.com/spf13/cobra"
 )
 
@@ -47,5 +47,5 @@ func Analyze(cmd *cobra.Command, args []string) error {
 	//	return err
 	//}
 	//println(f)
-	return nil
+	return tools.GenerateGraphviz(data, "graph.dot")
 }
