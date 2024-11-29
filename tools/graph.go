@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -75,11 +76,11 @@ func GenerateDOT(graph *CallGraph, filename string) error {
 		buf.WriteString(fmt.Sprintf("    subgraph cluster_%s {\n", safeClusterName))
 		buf.WriteString("        style=filled;\n")
 		buf.WriteString(fmt.Sprintf("        color=\"%s\";\n", color))
-		buf.WriteString(fmt.Sprintf("        label=\"%s\";\n", clusterLabel))
+		buf.WriteString(fmt.Sprintf("        label=\"%s\";\n", escapeStringForDOT(clusterLabel)))
 		for _, node := range nodes {
 			nodeID := sanitizeIdentifier(node.Name)
 			label := node.Name
-			buf.WriteString(fmt.Sprintf("        \"%s\" [label=\"%s\", shape=rectangle];\n", nodeID, label))
+			buf.WriteString(fmt.Sprintf("        \"%s\" [label=\"%s\", shape=rectangle];\n", nodeID, escapeStringForDOT(label)))
 		}
 		buf.WriteString("    }\n")
 	}
@@ -104,7 +105,7 @@ func GenerateDOT(graph *CallGraph, filename string) error {
 	for _, node := range otherNodes {
 		nodeID := sanitizeIdentifier(node.Name)
 		label := node.Name
-		buf.WriteString(fmt.Sprintf("    \"%s\" [label=\"%s\", shape=oval];\n", nodeID, label))
+		buf.WriteString(fmt.Sprintf("    \"%s\" [label=\"%s\", shape=oval];\n", nodeID, escapeStringForDOT(label)))
 	}
 
 	// Write edges
@@ -136,7 +137,24 @@ func sanitizeIdentifier(name string) string {
 		}
 		return '_'
 	}, name)
-	return safeName
+	// Append length of original name to ensure uniqueness
+	return fmt.Sprintf("%s_%d", safeName, len(name))
+}
+
+// Helper function to escape strings for DOT labels
+func escapeStringForDOT(s string) string {
+	// Escape backslashes, double quotes, and special characters
+	s = strings.ReplaceAll(s, "\\", "\\\\")
+	s = strings.ReplaceAll(s, "\"", "\\\"")
+	s = strings.ReplaceAll(s, "\n", "\\n")
+	s = strings.ReplaceAll(s, "\r", "")
+	return s
+}
+
+// Helper function to escape labels for DOT format
+func escapeLabel(label string) string {
+	// Use strconv.Quote to escape special characters
+	return strconv.Quote(label)
 }
 
 // Helper function to sanitize node names for DOT format
