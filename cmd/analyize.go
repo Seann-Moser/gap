@@ -6,6 +6,8 @@ package cmd
 import (
 	"github.com/Seann-Moser/gpa/tools"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 // analyizeCmd represents the analyize command
@@ -22,6 +24,7 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
+	analyzeCmd.Flags().AddFlagSet(Flags())
 	rootCmd.AddCommand(analyzeCmd)
 
 	// Here you will define your flags and configuration settings.
@@ -35,19 +38,14 @@ func init() {
 	// analyizeCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func Analyze(cmd *cobra.Command, args []string) error {
-	data, err := tools.ListFunctions("")
-	if err != nil {
-		return err
-	}
-	tools.SortByComplexity(data)
-	tools.PrintFunctionInfos(data)
+func Flags() *pflag.FlagSet {
+	fs := pflag.NewFlagSet("analyze", pflag.ExitOnError)
+	fs.StringP("src", "s", "", "Path to the project")
+	return fs
+}
 
-	//f, err := tools.GetFunctionWithComments(data[rand.Intn(len(data))])
-	//if err != nil {
-	//	return err
-	//}
-	//println(f)
-	_ = tools.ExportToCSV(data, "data.csv")
-	return tools.GenerateGraphviz(data, "graph.dot")
+func Analyze(cmd *cobra.Command, args []string) error {
+
+	return tools.Analyze(viper.GetString("src"), viper.GetString("output"))
+
 }
